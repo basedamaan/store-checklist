@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Store Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F3EE;
+  --card: #FFFFFF;
+  --accent: #1B4332;
+  --accent-light: #2D6A4F;
+  --accent-pale: #D8F3DC;
+  --warm: #B7410E;
+  --warm-pale: #FDEAE0;
+  --text: #1A1A1A;
+  --text-muted: #7A7A7A;
+  --border: #E6E2DB;
+  --yes: #2D6A4F;
+  --yes-bg: #D8F3DC;
+  --no: #B7410E;
+  --no-bg: #FDEAE0;
+  --gold: #D4A843;
+  --shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+input { font-family: inherit; outline: none; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+.scale-in { animation: scaleIn 0.35s ease forwards; }
+
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ─── HOME ─── */
+.home-wrap { max-width: 460px; margin: 0 auto; padding: 36px 20px 40px; }
+.home-logo {
+  width: 68px; height: 68px; border-radius: 18px;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 22px; box-shadow: 0 8px 28px rgba(27,67,50,0.28);
+}
+.home-logo svg { color: #fff; width: 30px; height: 30px; }
+.home-title { font-family: 'Playfair Display', serif; font-size: 27px; font-weight: 700; text-align: center; line-height: 1.2; }
+.home-subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 10px; }
+.home-date { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 4px; letter-spacing: 0.3px; }
+
+/* Connection status */
+.connection-status {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 14px; font-size: 12px; font-weight: 500;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.status-dot.green { background: var(--yes); }
+.status-dot.red { background: var(--no); }
+.status-dot.orange { background: var(--gold); }
+
+.store-card {
+  background: var(--card); border-radius: 16px; padding: 24px;
+  box-shadow: var(--shadow); border: 1px solid var(--border); margin-top: 28px;
+}
+.store-card-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 14px;
+}
+.store-btn {
+  display: block; width: 100%; padding: 14px 16px; margin-bottom: 6px;
+  border-radius: 10px; background: var(--bg); text-align: left;
+  font-size: 15px; font-weight: 500; color: var(--text);
+  border: 2px solid transparent; transition: all 0.15s ease;
+}
+.store-btn:last-child { margin-bottom: 0; }
+.store-btn.selected { background: var(--accent-pale); color: var(--accent); border-color: var(--accent); }
+.store-btn:hover { background: var(--accent-pale); }
+
+.action-area { margin-top: 24px; display: none; }
+.action-area.visible { display: flex; flex-direction: column; gap: 10px; animation: fadeUp 0.3s ease; }
+.btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600;
+  background: var(--accent); color: #fff;
+  box-shadow: 0 4px 18px rgba(27,67,50,0.3); transition: all 0.15s;
+}
+.btn-primary:hover { box-shadow: 0 6px 24px rgba(27,67,50,0.4); }
+.btn-secondary {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600;
+  background: var(--card); color: var(--accent); border: 2px solid var(--accent); transition: all 0.15s;
+}
+.btn-secondary:hover { background: var(--accent-pale); }
+.already-submitted { text-align: center; font-size: 13px; color: var(--yes); font-weight: 500; margin-top: 2px; }
+.sheets-link {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  background: #E8F5E9; color: #2E7D32; border: 1.5px solid #A5D6A7; transition: all 0.15s;
+  text-decoration: none;
+}
+.sheets-link:hover { background: #C8E6C9; }
+
+/* ─── CHECKLIST ─── */
+.cl-header {
+  position: sticky; top: 0; z-index: 100; background: var(--accent);
+  padding: 14px 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.cl-header-inner { max-width: 640px; margin: 0 auto; }
+.cl-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cl-back { background: rgba(255,255,255,0.15); color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.cl-store-name { color: rgba(255,255,255,0.75); font-size: 13px; }
+.cl-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.cl-tab {
+  flex: 1; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  text-align: center; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); transition: all 0.15s;
+}
+.cl-tab.active { background: #fff; color: var(--accent); }
+.cl-progress-bar { background: rgba(255,255,255,0.2); border-radius: 6px; height: 8px; overflow: hidden; }
+.cl-progress-fill { height: 100%; background: var(--gold); border-radius: 6px; transition: width 0.4s ease; }
+.cl-progress-text { color: rgba(255,255,255,0.65); font-size: 12px; text-align: right; margin-top: 5px; }
+.cl-body { max-width: 640px; margin: 0 auto; padding: 18px 14px 110px; }
+
+.cl-section { margin-bottom: 10px; }
+.cl-section-header {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; background: var(--card); border-radius: 14px;
+  border: 1px solid var(--border); font-size: 15px; font-weight: 600; color: var(--text); transition: border-radius 0.2s;
+}
+.cl-section-header.open { border-radius: 14px 14px 0 0; border-bottom: none; }
+.cl-section-header .left { display: flex; align-items: center; gap: 8px; }
+.cl-section-header .right { display: flex; align-items: center; gap: 8px; }
+.cl-section-count { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.cl-section-count.done { color: var(--yes); }
+.cl-section-issues { font-size: 11px; background: var(--no-bg); color: var(--no); padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.chevron { transition: transform 0.2s; display: inline-block; }
+.chevron.open { transform: rotate(90deg); }
+.cl-section-body {
+  background: var(--card); border-radius: 0 0 14px 14px;
+  border: 1px solid var(--border); border-top: none; overflow: hidden; display: none;
+}
+.cl-section-body.open { display: block; }
+
+.cl-item { padding: 13px 16px; border-top: 1px solid var(--border); }
+.cl-item:first-child { border-top: none; }
+.cl-item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cl-item-text { flex: 1; }
+.cl-item-text p { font-size: 14px; line-height: 1.5; color: var(--text); }
+.cl-item-num { color: var(--text-muted); font-size: 12px; margin-right: 4px; }
+.cl-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.cl-item-btns { display: flex; gap: 6px; flex-shrink: 0; margin-top: 2px; }
+.cl-ybtn, .cl-nbtn {
+  width: 40px; height: 40px; border-radius: 10px; display: flex;
+  align-items: center; justify-content: center; transition: all 0.15s;
+  background: var(--bg); color: var(--text-muted); border: 2px solid transparent;
+}
+.cl-ybtn.active { background: var(--yes-bg); color: var(--yes); border-color: var(--yes); }
+.cl-nbtn.active { background: var(--no-bg); color: var(--no); border-color: var(--no); }
+.cl-ybtn:hover { background: var(--yes-bg); }
+.cl-nbtn:hover { background: var(--no-bg); }
+.cl-remark-wrap { margin-top: 10px; animation: fadeUp 0.2s ease; }
+.cl-remark { width: 100%; padding: 10px 14px; font-size: 13px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+
+.cl-footer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(245,243,238,0.95); backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border); padding: 14px 16px;
+}
+.cl-footer-inner { max-width: 640px; margin: 0 auto; }
+.cl-submit {
+  width: 100%; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--accent); color: #fff; box-shadow: 0 4px 16px rgba(27,67,50,0.3); transition: all 0.15s;
+}
+.cl-submit:disabled { background: var(--border); color: var(--text-muted); box-shadow: none; }
+.cl-noitems { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 15px; }
+
+/* Spinner */
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+/* ─── SUCCESS ─── */
+.success-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; text-align: center; }
+.success-icon { width: 80px; height: 80px; border-radius: 50%; background: var(--yes-bg); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; animation: pulse 0.6s ease; }
+.success-icon svg { color: var(--yes); width: 40px; height: 40px; }
+.success-title { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 8px; }
+.success-store { color: var(--text-muted); font-size: 15px; }
+.success-date { color: var(--text-muted); font-size: 14px; margin-top: 2px; margin-bottom: 24px; }
+.success-stats { display: flex; gap: 0; background: var(--card); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 12px; }
+.success-stat { flex: 1; padding: 18px 24px; text-align: center; border-right: 1px solid var(--border); }
+.success-stat:last-child { border-right: none; }
+.success-stat .num { font-size: 28px; font-weight: 700; }
+.success-stat .label { font-size: 12px; margin-top: 2px; }
+.success-stat.yes .num { color: var(--yes); }
+.success-stat.yes .label { color: var(--yes); }
+.success-stat.no .num { color: var(--no); }
+.success-stat.no .label { color: var(--no); }
+.success-stat.skip .num { color: var(--text-muted); }
+.success-stat.skip .label { color: var(--text-muted); }
+.success-sync { font-size: 13px; margin-bottom: 28px; font-weight: 500; }
+.success-sync.ok { color: var(--yes); }
+.success-sync.fail { color: var(--no); }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: #fff; padding: 12px 24px; border-radius: 12px;
+  font-size: 14px; font-weight: 500; z-index: 200; opacity: 0;
+  transition: opacity 0.3s; pointer-events: none; max-width: 90%;
+}
+.toast.show { opacity: 1; }
+
+@media (max-width: 380px) {
+  .home-title { font-size: 23px; }
+  .success-stat { padding: 14px 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ HOME ════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-wrap">
+    <div class="fade-up">
+      <div class="home-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+      </div>
+      <div class="home-title">Store Manager<br><span style="color:var(--accent)">Daily Checklist</span></div>
+      <div class="home-subtitle" id="home-greeting"></div>
+      <div class="home-date" id="home-date"></div>
+      <div class="connection-status" id="connection-status"></div>
+    </div>
+
+    <div class="store-card fade-up" style="animation-delay:0.1s">
+      <div class="store-card-label">Select Your Store</div>
+      <div id="store-list"></div>
+    </div>
+
+    <div class="action-area" id="action-area">
+      <button class="btn-primary" onclick="startChecklist()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+        <span id="start-btn-text">Start Today's Checklist</span>
+      </button>
+      <div class="already-submitted" id="already-submitted" style="display:none"></div>
+      <a class="sheets-link" id="sheets-link" href="#" target="_blank" style="display:none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        Open Admin Dashboard (Google Sheet)
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CHECKLIST ════════════════ -->
+<div id="screen-checklist" class="screen">
+  <div class="cl-header">
+    <div class="cl-header-inner">
+      <div class="cl-topbar">
+        <button class="cl-back" onclick="goHome()">← Back</button>
+        <span class="cl-store-name" id="cl-store-name"></span>
+      </div>
+      <div class="cl-tabs">
+        <button class="cl-tab active" id="tab-daily" onclick="switchTab('daily')">Daily (<span id="daily-count">0</span>/45)</button>
+        <button class="cl-tab" id="tab-weekly" onclick="switchTab('weekly')">Weekly — <span id="weekly-day"></span> (<span id="weekly-count">0</span>/<span id="weekly-total">0</span>)</button>
+      </div>
+      <div class="cl-progress-bar"><div class="cl-progress-fill" id="cl-progress-fill" style="width:0%"></div></div>
+      <div class="cl-progress-text" id="cl-progress-text">0% complete</div>
+    </div>
+  </div>
+  <div class="cl-body" id="cl-body"></div>
+  <div class="cl-footer">
+    <div class="cl-footer-inner">
+      <button class="cl-submit" id="cl-submit" disabled onclick="submitChecklist()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span id="cl-submit-text">Submit Checklist (0 items)</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SUCCESS ════════════════ -->
+<div id="screen-success" class="screen">
+  <div class="success-wrap">
+    <div class="success-icon scale-in">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="success-title fade-up">Checklist Submitted!</div>
+    <div class="success-store fade-up" id="success-store"></div>
+    <div class="success-date fade-up" id="success-date"></div>
+    <div class="success-stats fade-up" style="animation-delay:0.1s">
+      <div class="success-stat yes"><div class="num" id="success-yes">0</div><div class="label">Compliant</div></div>
+      <div class="success-stat no"><div class="num" id="success-no">0</div><div class="label">Issues</div></div>
+      <div class="success-stat skip"><div class="num" id="success-skip">0</div><div class="label">Skipped</div></div>
+    </div>
+    <div class="success-sync" id="success-sync"></div>
+    <button class="btn-primary fade-up" style="max-width:280px;animation-delay:0.2s" onclick="goHome()">Back to Home</button>
+  </div>
+</div>
+
+<!-- ════════════════ TOAST ════════════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ★★★ CONFIGURATION — EDIT THESE TWO VALUES ★★★
+// ═══════════════════════════════════════════════════════════════
+
+// Step 1: Paste your Google Apps Script Web App URL here:
+const GOOGLE_SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+// Step 2: Paste your Google Sheet URL here (for the admin link):
+const GOOGLE_SHEET_URL = "PASTE_YOUR_GOOGLE_SHEET_URL_HERE";
+
+// ═══════════════════════════════════════════════════════════════
+// STORE NAMES — Edit these to match your stores
+// ═══════════════════════════════════════════════════════════════
+const STORES = [
+  "Store 1 - Jio World",
+  "Store 2 - Palladium",
+  "Store 3 - BKC",
+  "Store 4 - Powai",
+  "Store 5 - Worli"
+];
+
+// ═══════════════════════════════════════════════════════════════
+// CHECKLIST DATA
+// ═══════════════════════════════════════════════════════════════
+const DAILY_SECTIONS = [
+  { title: "Interior", items: [
+    { id:"d-int-1", text:"The Store Floor is clean and tidy", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-2", text:"All the lights and AC are in working condition", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-3", text:"Baskets/Trolleys are clean, dust free and sanitized", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-4", text:"No Cartons/crates found lying on the floor", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-5", text:"Store is free of pests", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-6", text:"SELs & VMs are in place as per the brief", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-7", text:"All equipments clean & working — Café and Store", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-8", text:"All Chillers/Freezers/Flycatcher in working condition", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-9", text:"Music System operational during trading times", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-10", text:"Check all Tabs are working", source:"Floor Walk", l1:"Opening DM" },
+    { id:"d-int-11", text:"Check if all WIFI is working", source:"Floor Walk", l1:"Opening DM" },
+  ]},
+  { title: "Merchandising", items: [
+    { id:"d-mer-1", text:"All Products displayed in an organized manner", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-mer-2", text:"Products found in their respective departments", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-mer-3", text:"All products look fresh, clean and non-dusty", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-mer-4", text:"All F&V/Non Veg is fresh (not wilted, stained, shrivelled)", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-mer-5", text:"Experience Zone Execution + Sampling as per brief", source:"Experience Zones Brief", l1:"Store Director" },
+    { id:"d-mer-6", text:"Kitchen Studio set up as per the brief", source:"Marketing Brief", l1:"Head Chef" },
+    { id:"d-mer-7", text:"Café area alignment & setup of tables", source:"Floor Walk", l1:"Café Manager" },
+    { id:"d-mer-8", text:"Display of Cheese & Charcuterie Platters/Cut F&V & Juicery", source:"Category Brief", l1:"Café Manager" },
+  ]},
+  { title: "VM", items: [
+    { id:"d-vm-1", text:"The right SELs for the products are in place", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-vm-2", text:"VM for the Experience Zones are in place", source:"Floor Walk", l1:"Category DMs/Store VM" },
+    { id:"d-vm-3", text:"Promo table/Gifting wall/Pantry Perks well-arranged", source:"Category Brief", l1:"Category DMs" },
+    { id:"d-vm-4", text:"SEL adherence in F&V, Bakery, Deli Cheese and Non Veg", source:"Floor Walk", l1:"Category DMs/Store VM" },
+  ]},
+  { title: "Staffing", items: [
+    { id:"d-stf-1", text:"All Counters and Departments manned at all times", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-stf-2", text:"Staff, SIS, HK, Security wearing required Uniforms", source:"Floor Walk", l1:"Store Director" },
+    { id:"d-stf-3", text:"Cashiers available at the cash counter", source:"Floor Walk", l1:"Head Cashier" },
+  ]},
+  { title: "Process", items: [
+    { id:"d-prc-1", text:"Daily Margin Report checked and shared", source:"Daily MIS", l1:"Asst Store Manager" },
+    { id:"d-prc-2", text:"Negative Margins taken out and action taken", source:"Daily MIS", l1:"Asst Store Manager" },
+    { id:"d-prc-3", text:"Dump posting for F&V, LK, Café and Non Veg", source:"SAP/Dump Registers", l1:"Category DMs" },
+    { id:"d-prc-4", text:"Staff briefing checklist followed and signed", source:"Briefing Checklist", l1:"Store Director" },
+    { id:"d-prc-5", text:"Café briefing checklist followed and signed", source:"Briefing Checklist", l1:"Café Manager" },
+    { id:"d-prc-6", text:"Deeply check 1 bay for MPM, PMM/INFs", source:"Floor Walk", l1:"Category DMs" },
+    { id:"d-prc-7", text:"CCPI done as per schedule", source:"CCPI Schedule", l1:"Asst Store Manager" },
+    { id:"d-prc-8", text:"Pending GRN Report to be shared", source:"Inward Register", l1:"Warehouse DM" },
+    { id:"d-prc-9", text:"Pending Manual bills", source:"Manual Bill Book", l1:"Head Cashier" },
+    { id:"d-prc-10", text:"Electricity consumption recorded", source:"Electricity Meter", l1:"Store Maintenance" },
+    { id:"d-prc-11", text:"Invoices scanning done", source:"Inward Register", l1:"Warehouse DM" },
+    { id:"d-prc-12", text:"Credit notes/Refunds checked and signed", source:"Returns & Refund Register", l1:"Head Cashier" },
+    { id:"d-prc-13", text:"Expiry Tracker verification", source:"Floor Expiry Register", l1:"Category DMs" },
+    { id:"d-prc-14", text:"Aggregator Portals checked if Live", source:"Aggregator Portals", l1:"LK and Café DMs" },
+    { id:"d-prc-15", text:"Credit & Outstanding payment follow-ups", source:"Daily Cash Reco", l1:"Head Cashier" },
+  ]},
+  { title: "Digital Ops", items: [
+    { id:"d-dig-1", text:"Virtual Inventory Upload (4 times in a day)", source:"Stock Report", l1:"DM Digital Ops/Category DMs" },
+    { id:"d-dig-2", text:"Share SKUs with Category team OOS on Website", source:"Stock Report", l1:"Category DMs" },
+    { id:"d-dig-3", text:"Articles CCPI check for revenue sales loss", source:"Stock Report", l1:"Category DMs" },
+    { id:"d-dig-4", text:"Check Riders attendance", source:"Attendance Register", l1:"DM Digital Ops" },
+  ]},
+];
+
+const WEEKLY_SECTIONS = [
+  { day:"Monday", items:[
+    {id:"w-mon-1",text:"Weekly Sales Analysis Report",source:"Weekly MIS",l1:"Store Director"},
+    {id:"w-mon-2",text:"All store registers and checklists checked and signed",source:"Store Registers",l1:"Category DMs"},
+    {id:"w-mon-3",text:"Tech Escalation email to be sent",source:"Snag List",l1:"Store Maintenance"},
+    {id:"w-mon-4",text:"Petty cash details shared with Finance",source:"Petty Cash Vouchers",l1:"Head Cashier"},
+    {id:"w-mon-5",text:"Weekly DAD posting",source:"DAD Register",l1:"Category DMs"},
+    {id:"w-mon-6",text:"Consumption Booking — Base Kitchen/Café/Marketing/PM/Uniform",source:"Consumption Registers",l1:"Category DMs"},
+    {id:"w-mon-7",text:"BOM Booking for Gifting/Spice Garden",source:"",l1:""},
+    {id:"w-mon-8",text:"POs for all categories to be shared",source:"SAP SIH Report",l1:"Category DMs"},
+    {id:"w-mon-9",text:"Café RM ordering to be done",source:"SAP SIH Report/CCPI",l1:"Café Manager"},
+    {id:"w-mon-10",text:"Café and Base Kitchen store room setup and cleaning",source:"BOH Walk",l1:"Café Manager"},
+  ]},
+  { day:"Tuesday", items:[
+    {id:"w-tue-1",text:"Store snag list with updates on previous snags",source:"Snag List",l1:"Store Maintenance"},
+    {id:"w-tue-2",text:"BOM Booking for F&V/Café/Cheese & Charcuterie/Non Veg",source:"",l1:""},
+    {id:"w-tue-3",text:"Compile Customer Requirements",source:"",l1:"Store Director"},
+  ]},
+  { day:"Wednesday", items:[
+    {id:"w-wed-1",text:"Deep cleaning of Fun Zone/Office and Back Areas",source:"BOH Walk",l1:"Store Maintenance"},
+    {id:"w-wed-2",text:"Check Catalogue Hygiene — F&V/LK/Non Veg/Dairy/Gifting",source:"Website",l1:"Category DMs"},
+  ]},
+  { day:"Thursday", items:[
+    {id:"w-thu-1",text:"Store Petty cash Expenses",source:"Petty Cash Vouchers",l1:"Head Cashier"},
+    {id:"w-thu-2",text:"Café RM ordering to be done",source:"SAP SIH Report/CCPI",l1:"Café Manager"},
+    {id:"w-thu-3",text:"Check Catalogue Hygiene — FMCG/Staples/DF/Spices/Pantry Perks",source:"Website",l1:"Category DMs"},
+  ]},
+  { day:"Friday", items:[
+    {id:"w-fri-1",text:"Negative Inventory Correction",source:"SAP SIH Report",l1:"Warehouse DM"},
+  ]},
+  { day:"Saturday", items:[
+    {id:"w-sat-1",text:"PR Request for all categories",source:"SAP SIH Report",l1:"Category DMs"},
+    {id:"w-sat-2",text:"Deep Pest Control",source:"Pest Control Schedule",l1:"Store Maintenance"},
+    {id:"w-sat-3",text:"Warehouse — Deep Cleaning and Segregation",source:"BOH Walk",l1:"Store Maintenance"},
+    {id:"w-sat-4",text:"DMs Rostering for the upcoming week",source:"Weekly Roster",l1:"Store Director"},
+  ]},
+];
+
+const TOTAL_DAILY = DAILY_SECTIONS.reduce((s, sec) => s + sec.items.length, 0);
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let selectedStore = null;
+let currentTab = "daily";
+let responses = {};
+let remarks = {};
+let openSections = {};
+
+function dateKey(d) { return (d || new Date()).toISOString().split("T")[0]; }
+function todayKey() { return dateKey(); }
+function todayDayName() { return DAYS[new Date().getDay()]; }
+function getTodayWeekly() { return WEEKLY_SECTIONS.find(s => s.day === todayDayName()); }
+
+// LocalStorage helpers (for remembering submissions on device)
+function lsGet(k) { try { const v = localStorage.getItem("sc_"+k); return v ? JSON.parse(v) : null; } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem("sc_"+k, JSON.stringify(v)); } catch(e) { console.error(e); } }
+
+// Toast
+function showToast(msg, duration) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration || 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════════════════════════════
+function isConfigured() {
+  return GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("PASTE_YOUR");
+}
+
+async function sendToSheets(payload) {
+  if (!isConfigured()) return { ok: false, reason: "not_configured" };
+  try {
+    const resp = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors", // Apps Script requires this from browsers
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload),
+    });
+    // no-cors means we can't read the response, but if no error thrown, it likely worked
+    return { ok: true };
+  } catch (err) {
+    console.error("Sheets sync error:", err);
+    return { ok: false, reason: "network" };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════════════════════
+function initHome() {
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+  document.getElementById('home-greeting').textContent = greeting;
+  document.getElementById('home-date').textContent = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Connection status
+  const statusEl = document.getElementById('connection-status');
+  if (isConfigured()) {
+    statusEl.innerHTML = '<span class="status-dot green"></span> Connected to Google Sheets';
+    statusEl.style.color = 'var(--yes)';
+  } else {
+    statusEl.innerHTML = '<span class="status-dot orange"></span> Offline mode — configure Google Sheets URL';
+    statusEl.style.color = 'var(--gold)';
+  }
+
+  // Store list
+  const list = document.getElementById('store-list');
+  list.innerHTML = STORES.map(s =>
+    `<button class="store-btn" onclick="selectStore('${s}')">${s}</button>`
+  ).join('');
+}
+
+function selectStore(s) {
+  selectedStore = s;
+  document.querySelectorAll('.store-btn').forEach(b => b.classList.toggle('selected', b.textContent === s));
+  document.getElementById('action-area').classList.add('visible');
+
+  // Check existing
+  const existing = lsGet(`sub:${s}:${todayKey()}`);
+  const subEl = document.getElementById('already-submitted');
+  const btnText = document.getElementById('start-btn-text');
+  if (existing) {
+    const time = new Date(existing.submittedAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    subEl.textContent = `✓ Already submitted today at ${time}`;
+    subEl.style.display = 'block';
+    btnText.textContent = "Update Today's Checklist";
+  } else {
+    subEl.style.display = 'none';
+    btnText.textContent = "Start Today's Checklist";
+  }
+
+  // Sheets link
+  const sheetsLink = document.getElementById('sheets-link');
+  if (GOOGLE_SHEET_URL && !GOOGLE_SHEET_URL.includes("PASTE_YOUR")) {
+    sheetsLink.href = GOOGLE_SHEET_URL;
+    sheetsLink.style.display = 'flex';
+  } else {
+    sheetsLink.style.display = 'none';
+  }
+}
+
+function goHome() {
+  responses = {};
+  remarks = {};
+  openSections = {};
+  currentTab = "daily";
+  showScreen('home');
+  if (selectedStore) selectStore(selectedStore);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════════════════════════
+function startChecklist() {
+  responses = {};
+  remarks = {};
+  openSections = {};
+  currentTab = "daily";
+  document.getElementById('cl-store-name').textContent = selectedStore;
+  const tw = getTodayWeekly();
+  document.getElementById('weekly-day').textContent = todayDayName();
+  document.getElementById('weekly-total').textContent = tw ? tw.items.length : 0;
+  showScreen('checklist');
+  renderChecklist();
+  updateProgress();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-daily').classList.toggle('active', tab === 'daily');
+  document.getElementById('tab-weekly').classList.toggle('active', tab === 'weekly');
+  renderChecklist();
+  updateProgress();
+}
+
+function renderChecklist() {
+  const body = document.getElementById('cl-body');
+  let sections;
+  if (currentTab === 'daily') {
+    sections = DAILY_SECTIONS;
+  } else {
+    const tw = getTodayWeekly();
+    sections = tw ? [{ title: tw.day, items: tw.items }] : [];
+  }
+
+  if (sections.length === 0) {
+    body.innerHTML = `<div class="cl-noitems">No weekly tasks for ${todayDayName()}</div>`;
+    return;
+  }
+
+  body.innerHTML = sections.map((sec, si) => {
+    const secKey = `${currentTab}-${si}`;
+    const isOpen = openSections[secKey] !== false;
+    const answered = sec.items.filter(i => responses[i.id] !== undefined).length;
+    const yesCount = sec.items.filter(i => responses[i.id] === true).length;
+    const issues = answered - yesCount;
+
+    return `<div class="cl-section">
+      <button class="cl-section-header ${isOpen ? 'open' : ''}" onclick="toggleSection('${secKey}')">
+        <div class="left">
+          <span class="chevron ${isOpen ? 'open' : ''}">›</span>
+          <span>${sec.title}</span>
+        </div>
+        <div class="right">
+          <span class="cl-section-count ${answered === sec.items.length ? 'done' : ''}">${answered}/${sec.items.length}</span>
+          ${issues > 0 ? `<span class="cl-section-issues">${issues} issue${issues>1?'s':''}</span>` : ''}
+        </div>
+      </button>
+      <div class="cl-section-body ${isOpen ? 'open' : ''}">
+        ${sec.items.map((item, ii) => {
+          const isYes = responses[item.id] === true;
+          const isNo = responses[item.id] === false;
+          return `<div class="cl-item">
+            <div class="cl-item-row">
+              <div class="cl-item-text">
+                <p><span class="cl-item-num">${ii+1}.</span>${item.text}</p>
+                ${item.l1 ? `<div class="cl-item-meta">${item.l1}${item.source ? ' · '+item.source : ''}</div>` : ''}
+              </div>
+              <div class="cl-item-btns">
+                <button class="cl-ybtn ${isYes?'active':''}" onclick="setResp('${item.id}',true)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="cl-nbtn ${isNo?'active':''}" onclick="setResp('${item.id}',false)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            ${isNo ? `<div class="cl-remark-wrap"><input class="cl-remark" type="text" placeholder="Add remarks..." value="${remarks[item.id]||''}" oninput="setRem('${item.id}',this.value)"></div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSection(key) { openSections[key] = openSections[key] === false; renderChecklist(); }
+function setResp(id, val) { responses[id] = val; renderChecklist(); updateProgress(); }
+function setRem(id, val) { remarks[id] = val; }
+
+function updateProgress() {
+  const tw = getTodayWeekly();
+  const dAns = DAILY_SECTIONS.reduce((s, sec) => s + sec.items.filter(i => responses[i.id] !== undefined).length, 0);
+  const wAns = tw ? tw.items.filter(i => responses[i.id] !== undefined).length : 0;
+  document.getElementById('daily-count').textContent = dAns;
+  document.getElementById('weekly-count').textContent = wAns;
+  const total = currentTab === 'daily' ? TOTAL_DAILY : (tw ? tw.items.length : 0);
+  const answered = currentTab === 'daily' ? dAns : wAns;
+  const pct = total > 0 ? Math.round((answered/total)*100) : 0;
+  document.getElementById('cl-progress-fill').style.width = pct + '%';
+  document.getElementById('cl-progress-text').textContent = pct + '% complete';
+  const totalAns = dAns + wAns;
+  document.getElementById('cl-submit').disabled = totalAns === 0;
+  document.getElementById('cl-submit-text').textContent = `Submit Checklist (${totalAns} items)`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════════════════════
+async function submitChecklist() {
+  const btn = document.getElementById('cl-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+  const tw = getTodayWeekly();
+  const ts = new Date().toISOString();
+  const dk = todayKey();
+  let dYes=0, dAns=0, wYes=0, wAns=0;
+
+  // Build daily payload
+  const dailyItems = [];
+  DAILY_SECTIONS.forEach(sec => {
+    sec.items.forEach(it => {
+      const r = responses[it.id];
+      if (r !== undefined) dAns++;
+      if (r === true) dYes++;
+      dailyItems.push({ id:it.id, text:it.text, section:sec.title, source:it.source, l1:it.l1, response:r??null, remarks:remarks[it.id]||"" });
+    });
+  });
+  const dailyPayload = {
+    store:selectedStore, date:dk, type:"daily", submittedAt:ts,
+    items:dailyItems, stats:{ total:TOTAL_DAILY, answered:dAns, yes:dYes, no:dAns-dYes }
+  };
+
+  // Build weekly payload
+  let weeklyPayload = null;
+  if (tw) {
+    const weeklyItems = tw.items.map(it => {
+      const r = responses[it.id];
+      if (r !== undefined) wAns++;
+      if (r === true) wYes++;
+      return { id:it.id, text:it.text, source:it.source, l1:it.l1, response:r??null, remarks:remarks[it.id]||"" };
+    });
+    weeklyPayload = {
+      store:selectedStore, date:dk, day:todayDayName(), type:"weekly", submittedAt:ts,
+      items:weeklyItems, stats:{ total:tw.items.length, answered:wAns, yes:wYes, no:wAns-wYes }
+    };
+  }
+
+  // Save locally
+  lsSet(`sub:${selectedStore}:${dk}`, { submittedAt: ts });
+
+  // Send to Google Sheets
+  let syncOk = true;
+  const r1 = await sendToSheets(dailyPayload);
+  if (!r1.ok) syncOk = false;
+  if (weeklyPayload) {
+    const r2 = await sendToSheets(weeklyPayload);
+    if (!r2.ok) syncOk = false;
+  }
+
+  // Show success
+  document.getElementById('success-store').textContent = selectedStore;
+  document.getElementById('success-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('success-yes').textContent = dYes + wYes;
+  document.getElementById('success-no').textContent = (dAns-dYes) + (wAns-wYes);
+  document.getElementById('success-skip').textContent = (TOTAL_DAILY-dAns) + ((tw?tw.items.length:0)-wAns);
+
+  const syncEl = document.getElementById('success-sync');
+  if (!isConfigured()) {
+    syncEl.className = "success-sync fail";
+    syncEl.textContent = "⚠ Google Sheets not configured — data saved locally only";
+  } else if (syncOk) {
+    syncEl.className = "success-sync ok";
+    syncEl.textContent = "✓ Synced to Google Sheets";
+  } else {
+    syncEl.className = "success-sync fail";
+    syncEl.textContent = "⚠ Could not sync — data saved locally, will retry";
+  }
+
+  showScreen('success');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+initHome();
+</script>
+</body>
+</html>
